@@ -4,19 +4,17 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import java.io.File;
 
 
 public class BuildIndex {
     
-    public static Trie document = new Trie();
+    public static TrieToSerial document = new TrieToSerial();
     public static long startTime = System.currentTimeMillis();
 
     public static void main(String[] args) {
         
         getDocString(args[0]);
 
-        System.out.println(document.search("is", 4));
         System.out.println(document.totalWords.get(4));
         
         document.toSerial(args[0].substring(0, args[0].length() - 4));

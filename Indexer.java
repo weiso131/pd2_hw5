@@ -3,6 +3,8 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 import java.io.File;
 import java.util.ArrayList; 
 
@@ -10,27 +12,6 @@ public class Indexer{
     public ArrayList<index_double> Frequency = new ArrayList<>();
     public Indexer[] children = new Indexer[26];
 
-}
-
-class utility{
-    public static int binarySearch(ArrayList<index_double> Frequency, int bookIndex){
-        int l = 0, r = Frequency.size(), lr;
-
-        while (r > l + 1){
-            lr = (l + r) / 2;
-
-            if (Frequency.get(lr).bookIndex <= bookIndex)
-                l = lr;
-            else
-                r = lr;
-        }
-        lr = (l + r) / 2;
-
-        if (Frequency.get(lr).bookIndex == bookIndex) return lr;
-        else if (Frequency.get(l).bookIndex == bookIndex) return l;
-
-        return -1;
-    }
 }
 class index_double implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -43,8 +24,7 @@ class index_double implements Serializable {
 
 }
 
-
-class Trie {
+class TrieToSerial {
     Indexer root = new Indexer();
     ArrayList<Double> totalWords = new ArrayList<>();
 
@@ -67,31 +47,25 @@ class Trie {
         }
     }
 
-    public double search(String word, int bookIndex) {
-        Indexer node = root;
-        
-        for (char c : word.toCharArray()) {
-            node = node.children[c - 'a'];
-            if (node == null) {
-                return 0;
-            }
-        }
-        int index = utility.binarySearch(node.Frequency, bookIndex);
-        if (index != -1)
-            return node.Frequency.get(index).value;
-        return 0;
-    }
+    
 
     public void dfs(Indexer node, String path){
         for (int i = 0;i < 26;i++){
             if (node.children[i] != null)
                 dfs(node.children[i], path + (char)(i +  (int)'a'));
         }
+        ArrayList<index_double> TFIDFS = new ArrayList<index_double>();
+
+        for (index_double id : node.Frequency){
+            double TF = id.value / totalWords.get(id.bookIndex);
+            double IDF = Math.log(((double)totalWords.size()) / ((double)node.Frequency.size()));
+            TFIDFS.add(new index_double(id.bookIndex, TF * IDF));
+        }
 
         if (node.Frequency.size() != 0){
             try (FileOutputStream fileOut = new FileOutputStream(path + ".ser");
                 ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
-                out.writeObject(node.Frequency);
+                out.writeObject(TFIDFS);
             } catch (IOException i) {
                 i.printStackTrace();
             }
@@ -104,12 +78,43 @@ class Trie {
             singleDir.mkdirs();
         }
         try (FileOutputStream fileOut = new FileOutputStream(fileName + "/_totalWords.ser");
-                ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
-                out.writeObject(totalWords);
-            } catch (IOException i) {
-                i.printStackTrace();
-            }
+            ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
+            out.writeObject(totalWords);
+        } catch (IOException i) {
+            i.printStackTrace();
+        }
         dfs(root, fileName + "/");
     }
-    
+
+    public ArrayList<index_double> deSerial(String fileName, String word){
+        ArrayList<index_double> data = null;
+
+        try (FileInputStream fileIn = new FileInputStream(fileName);
+            ObjectInputStream in = new ObjectInputStream(fileIn)) {
+            data = (ArrayList<index_double>) in.readObject();
+        } catch (IOException i) {
+            data = new ArrayList<index_double>();
+        } catch (ClassNotFoundException c) {
+        }
+        Indexer node = root;
+        for (char c : word.toCharArray()) {
+            if (node.children[c - 'a'] == null) {
+                node.children[c - 'a'] = new Indexer();
+            }
+            node = node.children[c - 'a'];
+        }
+
+        node.Frequency = data;
+        return data;
+    }
+    public ArrayList<index_double> search(String path, String word) {
+        Indexer node = root;
+        
+        for (char c : word.toCharArray()) {
+            node = node.children[c - 'a'];
+            if (node == null) 
+                return deSerial(path, word);
+        }
+        return node.Frequency;
+    }
 }
