@@ -107,7 +107,8 @@ public class TFIDFSearch {
                 for (index_double id : searchData){
                     value[id.bookIndex] += id.value;
                     add_count[id.bookIndex]++;
-
+                    
+                    
                     if (add_count[id.bookIndex] == count && useAND == 1)
                         ans.add(new TFIDFData(id.bookIndex, value[id.bookIndex]));
                 }

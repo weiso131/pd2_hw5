@@ -9,6 +9,7 @@ import java.io.File;
 import java.util.ArrayList; 
 
 public class Indexer{
+    boolean use = false;
     public ArrayList<index_double> Frequency = new ArrayList<>();
     public Indexer[] children = new Indexer[26];
 
@@ -25,6 +26,7 @@ class index_double implements Serializable {
 }
 
 class TrieToSerial {
+    
     Indexer root = new Indexer();
     ArrayList<Double> totalWords = new ArrayList<>();
 
@@ -81,7 +83,7 @@ class TrieToSerial {
             ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
             out.writeObject(totalWords);
         } catch (IOException i) {
-            i.printStackTrace();
+            
         }
         dfs(root, fileName + "/");
     }
@@ -105,15 +107,19 @@ class TrieToSerial {
         }
 
         node.Frequency = data;
+        node.use = true;
         return data;
     }
     public ArrayList<index_double> search(String path, String word) {
         Indexer node = root;
-        
-        for (char c : word.toCharArray()) {
+        char[] wordArray = word.toCharArray();
+        for (int i = 0;i < wordArray.length;i++) {
+            char c = wordArray[i];
             node = node.children[c - 'a'];
-            if (node == null) 
+            if (node == null || (node.use == false && i == wordArray.length - 1)) {
                 return deSerial(path, word);
+            }
+                
         }
         return node.Frequency;
     }
