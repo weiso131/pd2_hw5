@@ -102,7 +102,7 @@ public class TFIDFSearch {
                 sb.append("/");
                 sb.append(query[i]);
                 sb.append(".ser");
-                ArrayList<index_double> searchData = document.search(bookName + "/" + query[i] + ".ser", query[i]);
+                ArrayList<index_double> searchData = document.search(sb.toString(), query[i]);
 
                 for (index_double id : searchData){
                     value[id.bookIndex] += id.value;
@@ -110,9 +110,6 @@ public class TFIDFSearch {
 
                     if (add_count[id.bookIndex] == count && useAND == 1)
                         ans.add(new TFIDFData(id.bookIndex, value[id.bookIndex]));
-                    if (i == query.length - 1 && !(add_count[id.bookIndex] == count && useAND == 1) && useAND == 1){
-                        System.out.println(String.format("add_count:%d, count:%d", add_count[id.bookIndex], count));
-                    }
                 }
 
             }
@@ -127,7 +124,6 @@ public class TFIDFSearch {
                 return Double.compare(p2.TFIDF, p1.TFIDF);
             }
         };
-        System.out.println(count);
         Collections.sort(ans, TFIDFComparator);
         
         return ans;
