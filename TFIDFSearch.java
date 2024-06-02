@@ -122,6 +122,8 @@ public class TFIDFSearch {
         Comparator<TFIDFData> TFIDFComparator = new Comparator<TFIDFData>() {
             @Override
             public int compare(TFIDFData p1, TFIDFData p2) {
+                if (Double.compare(p2.TFIDF, p1.TFIDF) == 0)
+                    return Integer.compare(p1.number, p2.number);
                 return Double.compare(p2.TFIDF, p1.TFIDF);
             }
         };

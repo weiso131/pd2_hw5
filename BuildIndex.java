@@ -14,10 +14,7 @@ public class BuildIndex {
     public static void main(String[] args) {
         
         getDocString(args[0]);
-
-        System.out.println(document.totalWords.get(4));
-        
-        document.toSerial(args[0].substring(0, args[0].length() - 4));
+        document.toSerial(args[0].substring(getFileNameStart(args[0]), args[0].length() - 4));
 
     }
 
@@ -52,6 +49,13 @@ public class BuildIndex {
                 document.insert(word, 1, index);
             }
         }
+    }
+    public static int getFileNameStart(String fileName) {
+        char[] fileNameArray = fileName.toCharArray();
+        for (int i = fileNameArray.length - 1; i >= 0; i--)           
+            if (fileNameArray[i] == '/')
+                return i + 1;
+        return 0;
     }
     
 }
