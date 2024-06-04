@@ -4,39 +4,29 @@ import java.io.FileReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.io.DataInputStream;
 
 
 public class TFIDFSearch {
 
-    public static int n = -1;
+    public static int returnNumber = -1;
     public static String bookName;
     
-    public static TrieToSerial document = new TrieToSerial();
+    public static FastTrie document = new FastTrie();
     public static void main(String[] args){
 
 
-        bookName = args[0];
-        ArrayList<Double> totalWords = new ArrayList<>();
-        try (FileInputStream fileIn = new FileInputStream(bookName + "/_totalWords.ser");
-            ObjectInputStream in = new ObjectInputStream(fileIn)) {
-            totalWords = (ArrayList<Double>) in.readObject();
-        } catch (IOException i) {
-            i.printStackTrace();
-            return;
-        } catch (ClassNotFoundException c) {
-            return;
+        bookName = args[0] + '/';
+        try (DataInputStream dis = new DataInputStream(new FileInputStream(bookName + "_totalWords.dat"))) {
+            document.totalBook = dis.readInt();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        document.totalWords = totalWords;
-
-
         getInputFile(args[1]);
-
-        
     }
     public static void getInputFile(String fileName){
 
@@ -44,20 +34,20 @@ public class TFIDFSearch {
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
             String line;
             while ((line = br.readLine()) != null){
-                if (n == -1){
-                    n = Integer.parseInt(line);
+                if (returnNumber == -1){
+                    returnNumber = Integer.parseInt(line);
                     continue;
                 }
                 ArrayList<TFIDFData> ans = splitProcess(line);
 
                 
 
-                for (int i = 0;i < Math.min(n, ans.size());i++){
+                for (int i = 0;i < Math.min(returnNumber, ans.size());i++){
                     output.append(ans.get(i).number);
                     output.append(" ");
                 }
                     
-                for (int i = 0;i < n - ans.size();i++){
+                for (int i = 0;i < returnNumber - ans.size();i++){
                     output.append("-1 ");
                 }
                 output.append("\n");
@@ -91,18 +81,17 @@ public class TFIDFSearch {
 
     public static ArrayList<TFIDFData> ANDOR(String[] query, int useAND){
         ArrayList<TFIDFData> ans = new ArrayList<>();
-        double value[] = new double[document.totalWords.size()];
-        int add_count[] = new int[document.totalWords.size()];
-        int count = useAND * (query.length / 2 + 1);
+        double value[] = new double[document.totalBook];
+        int add_count[] = new int[document.totalBook];
+        int count = query.length / 2 + 1;
 
         for (int i = 0;i < query.length;i++){
             if (i % 2 == 0){
                 StringBuilder sb = new StringBuilder();
                 sb.append(bookName);
-                sb.append("/");
                 sb.append(query[i]);
                 sb.append(".ser");
-                ArrayList<index_double> searchData = document.search(sb.toString(), query[i]);
+                index_double[] searchData = document.search(sb.toString(), query[i]);
 
                 for (index_double id : searchData){
                     value[id.bookIndex] += id.value;
@@ -144,3 +133,4 @@ class TFIDFData {
         this.TFIDF = TFIDF;
     }
 }
+

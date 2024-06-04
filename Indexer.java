@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.io.File;
 import java.util.ArrayList; 
+import java.io.DataOutputStream;
 
 public class Indexer{
     boolean use = false;
@@ -67,7 +68,7 @@ class TrieToSerial {
         if (node.Frequency.size() != 0){
             try (FileOutputStream fileOut = new FileOutputStream(path + ".ser");
                 ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
-                out.writeObject(TFIDFS);
+                out.writeObject(TFIDFS.toArray(new index_double[0]));
             } catch (IOException i) {
                 i.printStackTrace();
             }
@@ -79,29 +80,40 @@ class TrieToSerial {
         if (!singleDir.exists()){
             singleDir.mkdirs();
         }
-        try (FileOutputStream fileOut = new FileOutputStream(fileName + "/_totalWords.ser");
-            ObjectOutputStream out = new ObjectOutputStream(fileOut)) {
-            out.writeObject(totalWords);
-        } catch (IOException i) {
-            
+        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(fileName + "/_totalWords.dat"))) {
+            dos.writeInt(totalWords.size());
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         dfs(root, fileName + "/");
     }
 
-    public ArrayList<index_double> deSerial(String fileName, String word){
-        ArrayList<index_double> data = null;
+}
+
+class FastTrieNode{
+    boolean use = false;
+    public index_double[] Frequency = null;
+    public FastTrieNode[] children = new FastTrieNode[26];
+
+}
+class FastTrie{
+    FastTrieNode root = new FastTrieNode();
+    int totalBook = 0;
+
+    public index_double[] deSerial(String fileName, String word){
+        index_double[] data = null;
 
         try (FileInputStream fileIn = new FileInputStream(fileName);
             ObjectInputStream in = new ObjectInputStream(fileIn)) {
-            data = (ArrayList<index_double>) in.readObject();
+            data = (index_double[]) in.readObject();
         } catch (IOException i) {
-            data = new ArrayList<index_double>();
+            data = new index_double[0];
         } catch (ClassNotFoundException c) {
         }
-        Indexer node = root;
+        FastTrieNode node = root;
         for (char c : word.toCharArray()) {
             if (node.children[c - 'a'] == null) {
-                node.children[c - 'a'] = new Indexer();
+                node.children[c - 'a'] = new FastTrieNode();
             }
             node = node.children[c - 'a'];
         }
@@ -110,8 +122,8 @@ class TrieToSerial {
         node.use = true;
         return data;
     }
-    public ArrayList<index_double> search(String path, String word) {
-        Indexer node = root;
+    public index_double[] search(String path, String word) {
+        FastTrieNode node = root;
         char[] wordArray = word.toCharArray();
         for (int i = 0;i < wordArray.length;i++) {
             char c = wordArray[i];
